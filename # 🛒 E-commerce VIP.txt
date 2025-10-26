@@ -1,0 +1,25 @@
+# 🛒 E-commerce VIP
+
+## 📌 Descrição
+
+O projeto **E-commerce VIP** é uma aplicação **API REST** desenvolvida em **Spring Boot**, com foco na gestão de produtos e clientes de uma loja virtual.  
+O sistema permite o **cadastro, atualização, consulta e exclusão de produtos**, além da **expansão futura** para incluir clientes, pedidos e regras de negócio como **assinatura VIP**, **frete grátis** e **garantia estendida**.
+
+O objetivo é simular parte das operações de um e-commerce moderno, com foco em boas práticas de **desenvolvimento orientado a objetos**, **arquitetura limpa** e **padronização REST**.
+
+---
+
+## ⚙️ Tecnologias Utilizadas
+
+- ☕ **Java 21**
+- 🌱 **Spring Boot 3**
+- 🧩 **Maven**
+- 🗃️ **Spring Data JPA**
+- 💾 **Banco de Dados H2 (em memória)**
+- ✅ **Jakarta Validation**
+- 🧰 (Opcional) **Lombok**, **DevTools**
+
+---
+
+## 🧠 Estrutura do Projeto
+
