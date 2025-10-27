@@ -1,25 +1,71 @@
-# 🛒 E-commerce VIP
+---
 
-## 📌 Descrição
+## 🚀 Como Executar o Projeto
 
-O projeto **E-commerce VIP** é uma aplicação **API REST** desenvolvida em **Spring Boot**, com foco na gestão de produtos e clientes de uma loja virtual.  
-O sistema permite o **cadastro, atualização, consulta e exclusão de produtos**, além da **expansão futura** para incluir clientes, pedidos e regras de negócio como **assinatura VIP**, **frete grátis** e **garantia estendida**.
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/Fsidoro74/ecommerce-vip-api.git](https://github.com/Fsidoro74/ecommerce-vip-api.git)
+    ```
 
-O objetivo é simular parte das operações de um e-commerce moderno, com foco em boas práticas de **desenvolvimento orientado a objetos**, **arquitetura limpa** e **padronização REST**.
+2.  **Navegue até o diretório:**
+    ```bash
+    cd ecommerce-vip-api
+    ```
+
+3.  **Execute a aplicação (via Maven):**
+    ```bash
+    mvn spring-boot:run
+    ```
+
+4.  **A aplicação estará disponível em:** `http://localhost:8080`
 
 ---
 
-## ⚙️ Tecnologias Utilizadas
+## 🔗 Endpoints da API
 
-- ☕ **Java 21**
-- 🌱 **Spring Boot 3**
-- 🧩 **Maven**
-- 🗃️ **Spring Data JPA**
-- 💾 **Banco de Dados H2 (em memória)**
-- ✅ **Jakarta Validation**
-- 🧰 (Opcional) **Lombok**, **DevTools**
+A API está dividida em 3 módulos principais:
+
+### 📦 Módulo de Produtos
+
+| Método | Rota | Descrição |
+| :--- | :--- | :--- |
+| `GET` | `/produtos` | Lista todos os produtos. |
+| `GET` | `/produtos/{id}` | Busca um produto por ID. |
+| `POST` | `/produtos` | Cria um novo produto. |
+| `PUT` | `/produtos/{id}` | Atualiza um produto (completo). |
+| `PATCH` | `/produtos/{id}` | Atualiza um produto (parcial). |
+| `DELETE` | `/produtos/{id}` | Deleta um produto. |
+
+### 👤 Módulo de Clientes
+
+| Método | Rota | Descrição |
+| :--- | :--- | :--- |
+| `GET` | `/clientes` | Lista todos os clientes. |
+| `GET` | `/clientes/{id}` | Busca um cliente por ID. |
+| `POST` | `/clientes` | Cria um novo cliente (com CEP). |
+| `PUT` | `/clientes/{id}` | Atualiza um cliente (completo). |
+| `PATCH` | `/clientes/{id}` | Atualiza um cliente (parcial). |
+| `DELETE` | `/clientes/{id}` | Deleta um cliente. |
+
+### 🛒 Módulo de Pedidos (com Regras de Negócio)
+
+| Método | Rota | Descrição |
+| :--- | :--- | :--- |
+| `GET` | `/pedidos` | Lista todos os pedidos. |
+| `GET` | `/pedidos/{id}` | Busca um pedido por ID. |
+| `GET` | `/pedidos/por-cliente/{id}` | **(Extra)** Lista o histórico de pedidos de um cliente. |
+| `POST`| `/pedidos?clienteId={id}` | **(Avançado)** Cria um novo pedido.<br/>(Recebe uma lista de IDs de produtos no Body).<br/>- Calcula frete (via ViaCEP).<br/>- Aplica desconto (se cliente VIP).|
+| `PATCH` | `/pedidos/{id}/status` | **(Extra)** Atualiza o status do pedido (ex: "ENVIADO"). |
+| `DELETE` | `/pedidos/{id}` | Deleta (cancela) um pedido. |
 
 ---
 
-## 🧠 Estrutura do Projeto
+### 💻 Acesso ao Banco H2
+
+Enquanto a aplicação estiver rodando, você pode inspecionar o banco de dados em memória:
+
+- **URL:** `http://localhost:8080/h2-console`
+- **JDBC URL:** `jdbc:h2:mem:ecommerce_db`
+- **User Name:** `sa`
+- **Password:** (deixe em branco)
 

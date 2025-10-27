@@ -32,16 +32,24 @@ public class Cliente {
     @Column(name = "is_vip") // Boa prática para nomes de colunas booleanas
     private Boolean isVip = false; // Valor padrão 'false'
 
+    // --- NOVO CAMPO ---
+    @NotBlank(message = "O CEP é obrigatório.")
+    @Size(min = 8, max = 8, message = "O CEP deve conter 8 dígitos (apenas números).")
+    private String cep;
+    // ------------------
+
+
     // Construtor vazio (Obrigatório para o JPA)
     public Cliente() {
     }
 
-    // Construtor com campos
-    public Cliente(String nome, String cpf, String email, Boolean isVip) {
+    // Construtor com campos (agora com o 'cep')
+    public Cliente(String nome, String cpf, String email, Boolean isVip, String cep) {
         this.nome = nome;
         this.cpf = cpf;
         this.email = email;
         this.isVip = isVip;
+        this.cep = cep; // Adicionado
     }
 
     // --- Getters e Setters ---
@@ -84,5 +92,13 @@ public class Cliente {
 
     public void setIsVip(Boolean isVip) {
         this.isVip = isVip;
+    }
+
+    public String getCep() {
+        return cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
     }
 }

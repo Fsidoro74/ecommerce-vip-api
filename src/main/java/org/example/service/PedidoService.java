@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.dto.EnderecoViaCepDTO;
 import org.example.model.Cliente;
 import org.example.model.Pedido;
 import org.example.model.Produto;
@@ -8,6 +9,7 @@ import org.example.repository.PedidoRepository;
 import org.example.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,7 +19,6 @@ import java.util.Optional;
 @Service
 public class PedidoService {
 
-    // --- Injetando TODOS os repositórios que vamos precisar ---
     @Autowired
     private PedidoRepository pedidoRepository;
 
@@ -27,9 +28,11 @@ public class PedidoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
+    @Autowired
+    private RestTemplate restTemplate;
 
-    // --- Métodos de Busca ---
 
+    // --- Métodos de Busca (iguais) ---
     public List<Pedido> listarTodos() {
         return pedidoRepository.findAll();
     }
@@ -38,61 +41,82 @@ public class PedidoService {
         return pedidoRepository.findById(id);
     }
 
-    // Método customizado que criamos no Repository
     public List<Pedido> buscarPorClienteId(Long clienteId) {
         return pedidoRepository.findByClienteId(clienteId);
     }
 
-    // --- Método Principal: Criar um Pedido ---
-    // Este método é diferente do 'salvar' comum.
-    // Ele recebe os IDs, busca as entidades, faz a lógica de negócio
-    // e então salva o novo pedido.
 
+    // --- MÉTODO 'CRIAR' ATUALIZADO ---
     public Pedido criar(Long clienteId, List<Long> produtoIds) {
 
         // 1. Buscar a entidade Cliente
         Cliente cliente = clienteRepository.findById(clienteId)
                                            .orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + clienteId));
 
-        // 2. Buscar as entidades Produto e calcular o valor total
+        // 2. Buscar as entidades Produto e calcular o valor total (subtotal)
         List<Produto> produtosDoPedido = new ArrayList<>();
-        double valorTotalCalculado = 0.0;
+        double subTotal = 0.0;
 
         for (Long produtoId : produtoIds) {
             Produto produto = produtoRepository.findById(produtoId)
                                                .orElseThrow(() -> new RuntimeException("Produto não encontrado com ID: " + produtoId));
 
-            // --- REGRA DE NEGÓCIO (Opcional, mas recomendado) ---
-            // Verificar se há estoque
             if (produto.getQuantidadeEstoque() <= 0) {
                 throw new RuntimeException("Produto fora de estoque: " + produto.getNome());
             }
 
             produtosDoPedido.add(produto);
-            valorTotalCalculado += produto.getPreco();
-
-            // --- REGRA DE NEGÓCIO (Opcional) ---
-            // Dar baixa no estoque
-            // produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - 1);
-            // produtoRepository.save(produto); // Salva a baixa no estoque
+            subTotal += produto.getPreco();
         }
 
-        // 3. Montar o Objeto Pedido
+        // 3. ✨ NOVA LÓGICA: APLICAR DESCONTO VIP ✨
+        // Verifica se o cliente é VIP (campo 'isVip' que criamos)
+        if (cliente.getIsVip()) {
+            double desconto = subTotal * 0.10; // Aplica 10% de desconto
+            subTotal = subTotal - desconto;
+
+            // Log simples para vermos no console do IntelliJ
+            System.out.println("Cliente VIP! Aplicando 10% de desconto (R$ " + desconto + ")");
+        }
+        // ------------------------------------
+
+        // 4. LÓGICA: CHAMAR API EXTERNA (ViaCEP)
+        String cepCliente = cliente.getCep();
+        String urlViaCEP = "https://viacep.com.br/ws/" + cepCliente + "/json/";
+        double frete = 0.0;
+
+        try {
+            EnderecoViaCepDTO endereco = restTemplate.getForObject(urlViaCEP, EnderecoViaCepDTO.class);
+
+            // 5. LÓGICA: CALCULAR FRETE (Fictício)
+            if (endereco != null && endereco.uf() != null) {
+                if (endereco.uf().equalsIgnoreCase("SP")) {
+                    frete = 10.0; // Frete fixo para SP
+                } else {
+                    frete = 30.0; // Frete para outros estados
+                }
+            } else {
+                frete = 50.0; // Frete padrão se o ViaCEP falhar
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao consultar ViaCEP: " + e.getMessage());
+            frete = 50.0; // Frete padrão em caso de erro
+        }
+
+        // 6. Montar o Objeto Pedido (com o valor total = subtotal c/ desconto + frete)
         Pedido novoPedido = new Pedido();
         novoPedido.setCliente(cliente);
         novoPedido.setProdutos(produtosDoPedido);
-        novoPedido.setDataPedido(LocalDate.now()); // Pega a data atual
-        novoPedido.setValorTotal(valorTotalCalculado);
-        novoPedido.setStatus("PROCESSANDO"); // Define um status inicial
+        novoPedido.setDataPedido(LocalDate.now());
+        novoPedido.setValorTotal(subTotal + frete); // <<<--- SOMA O FRETE AO SUBTOTAL JÁ COM DESCONTO
+        novoPedido.setStatus("PROCESSANDO");
 
-        // 4. Salvar o novo pedido no banco
+        // 7. Salvar o novo pedido no banco
         return pedidoRepository.save(novoPedido);
     }
 
-    // --- Métodos de Atualização e Deleção ---
+    // ... (O restante da classe, atualizarStatus e deletar, continua igual) ...
 
-    // Para um Pedido, um 'PATCH' (atualização parcial)
-    // normalmente serve para mudar o STATUS (ex: "ENVIADO", "ENTREGUE")
     public Pedido atualizarStatus(Long id, String novoStatus) {
         Pedido pedidoExistente = pedidoRepository.findById(id)
                                                  .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + id));
@@ -100,7 +124,6 @@ public class PedidoService {
         pedidoExistente.setStatus(novoStatus);
         return pedidoRepository.save(pedidoExistente);
     }
-
 
     public void deletar(Long id) {
         if (!pedidoRepository.existsById(id)) {
