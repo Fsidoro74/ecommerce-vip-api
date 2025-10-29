@@ -1,5 +1,3 @@
-README.md
-
 echo "# 🚀 E-commerce VIP API - Spring Boot
 
 ## 📝 Descrição
