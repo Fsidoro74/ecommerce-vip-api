@@ -9,9 +9,12 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Novo
 import org.springframework.security.crypto.password.PasswordEncoder; // Novo
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity // Habilita a segurança
@@ -19,6 +22,9 @@ public class SecurityConfig {
 
     @Autowired
     private AuthenticationService authenticationService; // Injetar nosso Service
+
+    @Autowired
+    private SecurityFilter securityFilter; // Nosso filtro JWT
 
     // 1. Configurar o Encoder (BCrypt é o padrão e mais seguro)
     @Bean
@@ -48,9 +54,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permite acesso público ao endpoint de login e documentação
-                        .requestMatchers("/auth/login", "/swagger-ui/**", "/v3/api-docs/**", "/auth/register")
-                        .permitAll()
+                        // Permite acesso público aos endpoints de autenticação (POST) e documentação (GET)
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // Tranca todos os outros endpoints (produtos, clientes, pedidos)
                         .anyRequest().authenticated()
@@ -59,6 +65,12 @@ public class SecurityConfig {
         // Por enquanto, não vamos usar autenticação básica ou formulário
         http.formLogin(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
+
+        // Sessões stateless para API REST
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // Registrar nosso filtro JWT antes do filtro padrão de usuário/senha
+        http.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

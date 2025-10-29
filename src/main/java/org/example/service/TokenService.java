@@ -3,7 +3,6 @@ package org.example.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -88,13 +87,8 @@ public class TokenService {
     }
 
     private SecretKey getSigningKey() {
-        // Preferimos que a chave seja Base64; se não for, caímos para bytes diretos
-        try {
-            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-            return Keys.hmacShaKeyFor(keyBytes);
-        } catch (IllegalArgumentException e) {
-            // Fallback para segredos não-base64 (melhor evitar em produção)
-            return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-        }
+        // TEMP: usar a chave exatamente como string simples (UTF-8), sem Base64
+        // Obs.: Em produção, prefira usar uma chave forte e, idealmente, em Base64.
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 }
